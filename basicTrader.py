@@ -35,7 +35,7 @@ class Trader:
 
             # String value holding Trader state data required.
         # It will be delivered as TradingState.traderData on next execution.
-        traderData = "SAMPLE"
+        traderData = "SAMPLE" #TODO: Change to TradingState.traderData
 
         # Sample conversion request. Check more details below.
         conversions = 1
