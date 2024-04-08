@@ -19,13 +19,15 @@ class Trader:
         for product, position in state.position.items():
             listing = state.listings.get(product)
             if listing:
-                total_value += position * listing.denomination
+                total_value += position #* listing.denomination
         return total_value
 
     def calculate_position_risk(self, product: str, price: int, quantity: int, state: TradingState) -> float:
         listing = state.listings.get(product)
+        print("Inside calculate_position_risk")
+        print(listing)
         if listing:
-            position_value = price * quantity * listing.denomination
+            position_value = price * quantity #* listing.denomination
             portfolio_value = self.calculate_portfolio_value(state)
             return position_value / portfolio_value
         else:
@@ -49,15 +51,23 @@ class Trader:
         # Strategy logic
         result = {}
         conversions = 0
-        trader_data = ""
+        trader_data = state.traderData
+
+        print(trader_data)
 
         for product, order_depth in state.order_depths.items():
+            print(product)
+            print(state.position)
             if product in state.position:
                 current_position = state.position[product]
 
                 # Risk management
                 risk_limit = self.risk_limits.get(product, 0)
-                for price, quantity in order_depth.buy_orders.items():
+
+                print("Risk Limit : " + str(risk_limit))
+                for price, quantity in order_depth.buy_orders.items(): #TODO this for loop only looks at buy orders, there is no sell
+                    print(price)
+                    print(quantity)
                     if quantity > 0:
                         position_risk = self.calculate_position_risk(product, price, quantity, state)
                         if position_risk > risk_limit:
@@ -72,16 +82,24 @@ class Trader:
                                 # Place buy order
                                 order_quantity = min(best_bid_amount, self.position_limits[product] - current_position)
                                 order = Order(product, best_bid, -order_quantity)
-                                if self.validate_order(order, state):
-                                    result[product] = [order]
-                        else:
+                                #if self.validate_order(order, state):
+                                result[product] = [order]
+                                break
+                        else: #TODO: Only looking at buy_orders
                             # Check for sell opportunity
                             best_ask, best_ask_amount = list(order_depth.sell_orders.items())[0]
                             if best_ask_amount < 0:
                                 # Place sell order
                                 order_quantity = min(-best_ask_amount, abs(current_position))
                                 order = Order(product, best_ask, order_quantity)
-                                if self.validate_order(order, state):
-                                    result[product] = [order]
+                                #if self.validate_order(order, state):
+                                result[product] = [order]
+                                break
+            else: # if we do not own any of the product, we take a half position initallity to prevent the algo from stalling
+                best_ask, best_ask_amount = list(order_depth.sell_orders.items())[0]
+                order_quantity = min(best_ask_amount, self.position_limits[product] // 2)
+                order = Order(product, best_ask, -order_quantity)
+                #if self.validate_order(order, state):
+                result[product] = [order]
 
         return result, conversions, trader_data

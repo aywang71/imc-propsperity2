@@ -5,6 +5,20 @@ import string
 
 class Trader:
 
+    def calcPrice(self, order_depth):
+        buy = order_depth.buy_orders
+        sell = order_depth.sell_orders
+        buy_weighted_sum = sum(price * quantity for price, quantity in buy.items())
+        buy_total_quantity = sum(buy.values())
+        buy_weighted_average = buy_weighted_sum / buy_total_quantity
+
+        sell_weighted_sum = sum(price * quantity for price, quantity in sell.items())
+        sell_total_quantity = sum(
+            abs(quantity) for quantity in sell.values())  # use abs() to ensure quantities are positive
+        sell_weighted_average = sell_weighted_sum / sell_total_quantity
+        sell_weighted_average_pos = abs(sell_weighted_average)
+        midpoint = (buy_weighted_average + sell_weighted_average_pos) / 2
+        return midpoint
     def run(self, state: TradingState):
         print("traderData: " + state.traderData)
         print("Observations: " + str(state.observations))
@@ -14,7 +28,8 @@ class Trader:
         for product in state.order_depths:
             order_depth: OrderDepth = state.order_depths[product]
             orders: List[Order] = []
-            acceptable_price = 10  # Participant should calculate this value
+            #Calculate acceptable price as the midpoint between the medians of buy/sell
+            acceptable_price = self.calcPrice(order_depth)
             print("Acceptable price : " + str(acceptable_price))
             print("Buy Order depth : " + str(len(order_depth.buy_orders)) + ", Sell order depth : " + str(
                 len(order_depth.sell_orders)))
