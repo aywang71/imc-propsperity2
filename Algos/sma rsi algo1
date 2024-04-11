@@ -1,0 +1,67 @@
+from datamodel import OrderDepth, UserId, TradingState, Order
+from typing import List
+import string
+
+class Trader:
+    def __init__(self):
+        # Hardcoding the SMA_3 based on previously calculated data for STARFRUIT
+        self.sma_3_starfruit = 5037  # Replace with the actual calculated value
+
+    def calcPrice(self, order_depth):
+        buy = order_depth.buy_orders
+        sell = order_depth.sell_orders
+        buy_weighted_sum = sum(price * quantity for price, quantity in buy.items())
+        buy_total_quantity = sum(buy.values())
+        buy_weighted_average = buy_weighted_sum / buy_total_quantity
+
+        sell_weighted_sum = sum(price * quantity for price, quantity in sell.items())
+        sell_total_quantity = sum(abs(quantity) for quantity in sell.values())
+        sell_weighted_average = sell_weighted_sum / sell_total_quantity
+        midpoint = (buy_weighted_average + abs(sell_weighted_average)) / 2
+        return midpoint
+
+    def run(self, state: TradingState, rsi_values):
+        print("traderData: " + state.traderData)
+        ame = state.position.get("AMETHYSTS", 0)
+        ameLimit = 20
+        star = state.position.get("STARFRUIT", 0)
+        starLimit = 20
+        print("positions: AMETHYSTS: " + str(ame) + ", STARFRUIT: " + str(star))
+        print("Observations: " + str(state.observations))
+
+        result = {}
+        for product, order_depth in state.order_depths.items():
+            orders = []
+            current_price = self.calcPrice(order_depth)
+            current_rsi = rsi_values[product]  # Assuming RSI values passed as a dictionary with product keys
+            print(f"Current price for {product}: {current_price}, RSI: {current_rsi}")
+
+            if product == "AMETHYSTS":
+                if current_rsi < 30:  # Buying condition based on RSI
+                    print("RSI indicates oversold condition for AMETHYSTS, considering buying")
+                    if order_depth.sell_orders:
+                        best_ask, best_ask_amount = sorted(order_depth.sell_orders.items(), key=lambda x: x[0])[0]
+                        orders.append(Order(product, best_ask, min(-best_ask_amount, ameLimit - ame)))
+                elif current_rsi > 70:  # Selling condition based on RSI
+                    print("RSI indicates overbought condition for AMETHYSTS, considering selling")
+                    if order_depth.buy_orders:
+                        best_bid, best_bid_amount = sorted(order_depth.buy_orders.items(), key=lambda x: -x[0])[0]
+                        orders.append(Order(product, best_bid, max(-best_bid_amount, -ame - ameLimit)))
+            elif product == "STARFRUIT":
+                if current_rsi < 30:  # Buying condition based on RSI
+                    print("RSI indicates oversold condition for STARFRUIT, considering buying")
+                    if order_depth.sell_orders:
+                        best_ask, best_ask_amount = sorted(order_depth.sell_orders.items(), key=lambda x: x[0])[0]
+                        orders.append(Order(product, best_ask, min(-best_ask_amount, starLimit - star)))
+                elif current_rsi > 70:  # Selling condition based on RSI
+                    print("RSI indicates overbought condition for STARFRUIT, considering selling")
+                    if order_depth.buy_orders:
+                        best_bid, best_bid_amount = sorted(order_depth.buy_orders.items(), key=lambda x: -x[0])[0]
+                        orders.append(Order(product, best_bid, max(-best_bid_amount, -star - starLimit)))
+
+            result[product] = orders
+
+        print("Trading decisions:", result)
+        traderData = state.traderData  # Persist state data if needed
+        conversions = 1  # Dummy for conversions handling
+        return result, conversions, traderData
