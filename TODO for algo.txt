@@ -1,0 +1,3 @@
+- parameterize product reading to reduce code copy
+- put in buy/sell orders after all orders have been placed up to positional limits to see if anyone will match 
+- historical modelling
