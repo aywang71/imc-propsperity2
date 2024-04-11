@@ -44,10 +44,10 @@ class Trader:
                 i = 0
                 while i < len(order_depth.sell_orders):
                     ask, ask_amount = list(order_depth.sell_orders.items())[i]
-                    ask_amount = min(ask_amount, ameLimit - ame)
+                    ask_amount = min(-ask_amount, ameLimit - ame)
                     if int(ask) <= acceptable_price:
-                        print("BUY", str(-ask_amount) + "x", ask)
-                        orders.append(Order(product, ask, -ask_amount))
+                        print("BUY", str(ask_amount) + "x", ask)
+                        orders.append(Order(product, ask, ask_amount))
                         ame += ask_amount
                     i += 1
 
@@ -58,12 +58,12 @@ class Trader:
                         orders.append(Order(product, best_ask, -best_ask_amount))"""
                 ame = state.position.get("AMETHYSTS", 0)
                 i = 0
-                while i < len(order_depth.sell_orders):
+                while i < len(order_depth.buy_orders):
                     bid, bid_amount = list(order_depth.buy_orders.items())[0]
-                    bid_amount = min(-bid_amount, ame + ameLimit)
+                    bid_amount = min(-bid_amount, -ame - ameLimit)
                     if int(bid) >= acceptable_price:
                         print("SELL", str(bid_amount) + "x", bid)
-                        orders.append(Order(product, bid, -bid_amount))
+                        orders.append(Order(product, bid, bid_amount))
                         ame -= bid_amount
                     i += 1
                 """if len(order_depth.buy_orders) != 0:
@@ -87,8 +87,8 @@ class Trader:
                     ask, ask_amount = list(order_depth.sell_orders.items())[i]
                     ask_amount = min(-ask_amount, starLimit - star)
                     if int(ask) <= acceptable_price:
-                        print("BUY", str(-ask_amount) + "x", ask)
-                        orders.append(Order(product, ask, -ask_amount))
+                        print("BUY", str(ask_amount) + "x", ask)
+                        orders.append(Order(product, ask, ask_amount))
                         star += ask_amount
                     i += 1
 
@@ -100,12 +100,12 @@ class Trader:
                 star = state.position.get("STARFRUIT", 0)
 
                 i = 0
-                while i < len(order_depth.sell_orders):
+                while i < len(order_depth.buy_orders):
                     bid, bid_amount = list(order_depth.buy_orders.items())[0]
-                    bid_amount = min(bid_amount, star + starLimit)
+                    bid_amount = min(-bid_amount, -star - starLimit)
                     if int(bid) >= acceptable_price:
                         print("SELL", str(bid_amount) + "x", bid)
-                        orders.append(Order(product, bid, -bid_amount))
+                        orders.append(Order(product, bid, bid_amount))
                         star -= bid_amount
                     i += 1
                 #TODO: Put in an order for whatever is remaining on buy/sell limits to buy at very good price and see if anyone matches it
